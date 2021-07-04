@@ -40,14 +40,12 @@ def det_infer_net(net, dataset):
 
             results['seg_fields'] = []
             dim = results['img_dim']
-
             if 'patches_img' in results.keys():
                 for p, image in enumerate(results['patches_img']):
                     tensor_data = {'img': torch.from_numpy(image).unsqueeze(0).cuda(),
                                    'img_meta': None}
                     if 'patches_gt_coord' in results:
-                        coord = results.pop('patches_gt_coord')
-                        tensor_data['gt_coord'] = torch.from_numpy(coord[p]).unsqueeze(0).cuda()
+                        tensor_data['gt_coord'] = torch.from_numpy(results['patches_gt_coord'][p]).unsqueeze(0).cuda()
                     with torch.no_grad():
                         prediction, _ = model.forward_infer(tensor_data)
                     pred_bboxes = prediction.cpu().numpy()[0]  # batch size = 1
