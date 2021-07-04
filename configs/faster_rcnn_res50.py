@@ -115,7 +115,8 @@ model = dict(
 )
 # dataset
 dataset_type = 'LungDetPairDataset'
-data_root = '/home/qiao/Desktop/Detection/Luna2016/'
+import os
+data_root = os.getenv("MedDATASETS") + '/Detection/Luna2016/'
 train_pipeline = [
     LoadImageFromFile(),
     LoadAnnotations(with_det=True),

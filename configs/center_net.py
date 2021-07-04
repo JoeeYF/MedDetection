@@ -1,4 +1,3 @@
-
 from meddet.task import *
 from meddet.data.pipelines import *
 
@@ -7,113 +6,54 @@ TASK = 'DET'
 CLASSES = 1
 FLOAT16 = True
 model = dict(
-    type='FasterRCNN',
+    type='CenterNet',
     dim=DIM,
-    backbone=DeepLungBK(
-        dim=DIM
+    backbone=SCPMNet(
+        dim=DIM,
+        depth=18,
+        in_channels=1,
+        out_channels=64
     ),
     neck=None,
-    rpn_head=dict(
-        type='RPNHead',
-        dim=DIM,
-        in_channels=128,
-        feat_channels=64,
-        level_first=True,
-        anchor_generator=dict(
-            type='AnchorGenerator',
-            base_scales=1,
-            scales=[1.25, 2.5, 5.0],
-            ratios=[1],
-            strides=[4]
-        ),
-        bbox_coder=dict(
-            type='DeltaBBoxCoder',
-            target_stds=[1., 1., 1., 1., 1., 1.]),
-        assigner=dict(
-            type='MaxIoUAssigner',
-            pos_iou_thr=0.8 ** DIM,
-            neg_iou_thr=0.2 ** DIM,
-            min_pos_iou=0.5 ** DIM,
-            match_low_quality=True,
-            num_neg=800),
-        sampler=dict(
-            type='OHEMSampler',
-            num=3 * 16,
-            pos_fraction=0.35),
-        proposal=dict(
-            nms_across_levels=False,
-            nms_pre=1000,
-            nms_post=500,
-            max_num=200,
-            nms_thr=0.7 ** DIM,
-            min_bbox_size=0),
-        losses=dict(
-            cls=CrossEntropyLoss(use_sigmoid=True),
-            reg=SmoothL1Loss(beta=1.0, reduction='mean', loss_weight=1.0)),
-        metrics=[
-            IOU(aggregate='none'),
-            Dist(aggregate='none', dist_threshold=5)
-        ],
-    ),
-    roi_head=dict(
-        type='ROIHead',
-        dim=DIM,
-        bbox_roi_extractor=dict(
-            type='SingleRoIExtractor',
-            dim=DIM,
-            roi_layer=dict(type='RoIAlign', output_size=7, sampling_ratio=0),
-            out_channels=128,
-            featmap_strides=[4]),
-        bbox_head=dict(
-            type='ConvFCBBoxHead',
-            dim=DIM,
-            num_classes=CLASSES,
-            in_channels=128,
-            feat_channels=128,
-            bbox_coder=dict(
-                type='DeltaBBoxCoder',
-                target_stds=[1., 1., 1., 1., 1., 1.]),
-            assigner=dict(
-                type='IoUAssigner',
-                pos_iou_thr=0.8 ** DIM,
-                neg_iou_thr=0.3 ** DIM,
-                min_pos_iou=0.4 ** DIM),
-            sampler=dict(
-                type='OHEMSampler',
-                num=16,
-                pos_fraction=0.25,
-                neg_pos_ub=-1,
-                add_random_gt=1),
-            nms=dict(
-                nms_pre=1000,
-                min_bbox_size=0,
-                score_thr=0.15,
-                nms_fun=dict(type='nms', iou_threshold=0.1),
-                max_per_img=100),
-            losses=dict(
-                cls=dict(type='CrossEntropyLoss'),
-                reg=dict(type='SmoothL1Loss', beta=1.0, reduction='mean', loss_weight=1.0)),
-            metrics=[
-                dict(type='IOU', aggregate='none')
-            ],
-        )
-    )
+    head=dict(type='CenterNetHead',
+              dim=DIM,
+              in_channel=64,
+              feat_channel=64,
+              num_classes=CLASSES,
+              loss_center_heatmap=dict(type='GaussianFocalLoss', loss_weight=1.0),
+              loss_wh=dict(type='L1Loss', loss_weight=0.1),
+              loss_offset=dict(type='L1Loss', loss_weight=1.0),
+              test_cfg=dict(topk=20, local_maximum_kernel=3),
+              nms=dict(
+                  nms_pre=1000,
+                  min_bbox_size=0,
+                  score_thr=0.15,
+                  nms_fun=dict(type='nms', iou_threshold=0.1),
+                  max_per_img=100),
+              metrics=[
+                  IOU(aggregate='none'),
+                  Dist(aggregate='none', dist_threshold=5)]
+              ),
 )
+
 # dataset
 dataset_type = 'LungDetPairDataset'
-data_root = '/home/qiao/Desktop/Detection/Luna2016/'
+import os
+data_root = os.getenv("MedDATASETS") + '/Detection/Luna2016/'
 train_pipeline = [
     LoadImageFromFile(),
     LoadAnnotations(with_det=True),
+    LoadCoordinate(),
     AnnotationMap({2: 1}),
     Normalize(mean=(-400,), std=(700,), clip=True),
     Pad(size=(96, 96, 96)),
     FirstDetCrop(patch_size=(96, 96, 96)),
-    Collect(keys=['img', 'gt_det']),
+    Collect(keys=['img', 'gt_det', 'gt_coord']),
 ]
 infer_pipeline = [
     LoadImageFromFile(),
     LoadPredictions(with_det=True),
+    LoadCoordinate(),
     Normalize(mean=(-400,), std=(700,), clip=True),
     Pad(size=(96, 96, 96)),
     Patches(patch_size=(96, 96, 96)),
