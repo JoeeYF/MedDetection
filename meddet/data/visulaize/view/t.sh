@@ -1,0 +1,1 @@
+/home/timothy/anaconda3/envs/main/bin/python /home/timothy/Softwares/view/main.py "$1"
