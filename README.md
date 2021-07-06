@@ -32,7 +32,7 @@ Detectors
 - [ ] Cascade R-CNN
 - [x] RetinaNet
 - [x] DeepLung
-- [ ] CenterNet
+- [x] CenterNet
 - [ ] yolov4
 
 Backbone
@@ -92,8 +92,6 @@ Detection/Luna2016
 ## References
 
 [MedVision](https://github.com/TimothyZero/MedVision)
-
-[PyTorch Lightning](https://github.com/PyTorchLightning/pytorch-lightning)
 
 [MMdetection](https://github.com/open-mmlab/mmdetection)
 
