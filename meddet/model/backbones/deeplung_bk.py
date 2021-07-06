@@ -133,7 +133,6 @@ class DeepLungBK(ComponentModule):
         rev2 = self.path2(comb3)
 
         if self.coord:
-
             coord = self.maxpoolcoord2(self.maxpoolcoord1(coord))
             comb2 = self.back2(torch.cat((rev2, out2, coord), 1))  # 64+64
         else:

@@ -126,7 +126,7 @@ class FasterRCNN(BaseTask):
         img = data_batch['img']
 
         coord = None if 'gt_coord' not in data_batch else data_batch['gt_coord']
-        feats = self.extract_feat(img,coord)
+        feats = self.extract_feat(img, coord)
 
         net_output = self.rpn_head(feats)
         batch_proposals = self.rpn_head.forward_infer(*net_output)

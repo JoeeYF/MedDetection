@@ -29,7 +29,7 @@ fi
 if [ "${infer}" = '1' ]; then
   echo "infer"
 
-  for i in {1..15}
+  for i in {1..10}
   do
     if test -d "work_dirs/${config}/infer_results_${FOLD}_${i}0ep" ; then
       continue
